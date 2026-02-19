@@ -7,14 +7,14 @@
 <button id="loginBtn">Login with Spotify</button>
 <br><br>
 
-<input type="text" id="playlistInput" placeholder="Enter playlist ID">
+<input type="text" id="playlistInput" placeholder="Enter playlist ID or full URL">
 <button id="fetchBtn">Fetch Playlist</button>
 
 <pre id="output"></pre>
 
 <script>
 /* -------------------- CONFIG -------------------- */
-const clientId = "0843377a81674214a2987451b805f396"; 
+const clientId = "0843377a81674214a2987451b805f396";
 const redirectUri = window.location.origin + window.location.pathname;
 
 let accessToken = null;
@@ -66,8 +66,13 @@ async function exchangeCode() {
   const code = new URLSearchParams(window.location.search).get("code");
   if (!code) return;
 
+  console.log("Authorization code received:", code);
+
   const verifier = localStorage.getItem("verifier");
-  if (!verifier) return;
+  if (!verifier) {
+    console.error("PKCE verifier not found in localStorage.");
+    return;
+  }
 
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
@@ -83,46 +88,68 @@ async function exchangeCode() {
 
   const data = await response.json();
 
-  accessToken = data.access_token;
-
-  // Store token so page reload after redirect works
-  sessionStorage.setItem("spotify_access_token", accessToken);
-
-  document.getElementById("output").textContent = "Logged in successfully.";
-
-  // Remove code from URL so it doesn't run exchange again on reload
-  window.history.replaceState({}, document.title, redirectUri);
-}
-
-/* -------------------- PLAYLIST FETCHING -------------------- */
-async function getPlaylistTracks(token, playlistId) {
-  const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
-    headers: {
-      Authorization: "Bearer " + token
-    }
-  });
-
-  const data = await response.json();
-
   if (data.error) {
+    console.error("Error exchanging code for token:", data);
     document.getElementById("output").textContent = JSON.stringify(data, null, 2);
     return;
   }
 
-  const ids = data.items.map(item => item.track.id);
-  document.getElementById("output").textContent =
-    "Track IDs:\n\n" + ids.join("\n");
+  accessToken = data.access_token;
+  sessionStorage.setItem("spotify_access_token", accessToken);
+
+  console.log("Access token acquired:", accessToken);
+  document.getElementById("output").textContent = "Logged in successfully.";
+
+  // Remove code from URL so exchange doesn't run again
+  window.history.replaceState({}, document.title, redirectUri);
+}
+
+/* -------------------- PLAYLIST FETCHING -------------------- */
+function extractPlaylistId(input) {
+  // If input is full URL, extract the ID
+  const match = input.match(/playlist\/([a-zA-Z0-9]+)/);
+  if (match) return match[1];
+  return input.trim(); // assume input is just the ID
+}
+
+async function getPlaylistTracks(token, playlistId) {
+  try {
+    const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    });
+
+    const data = await response.json();
+
+    if (data.error) {
+      console.error("API error:", data);
+      document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+      return;
+    }
+
+    const ids = data.items.map(item => item.track.id);
+    console.log("Track IDs:", ids);
+
+    document.getElementById("output").textContent =
+      "Track IDs:\n\n" + ids.join("\n");
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    document.getElementById("output").textContent = "Error fetching playlist.";
+  }
 }
 
 function handleFetch() {
   if (!accessToken) {
-    alert("You must login first.");
+    alert("You must login first and wait for token to be acquired.");
     return;
   }
 
-  const playlistId = document.getElementById("playlistInput").value.trim();
+  const input = document.getElementById("playlistInput").value;
+  const playlistId = extractPlaylistId(input);
+
   if (!playlistId) {
-    alert("Enter a playlist ID.");
+    alert("Enter a valid playlist ID or URL.");
     return;
   }
 
@@ -133,11 +160,11 @@ function handleFetch() {
 document.getElementById("loginBtn").addEventListener("click", login);
 document.getElementById("fetchBtn").addEventListener("click", handleFetch);
 
-// Restore token from session storage if page reloaded after redirect
+// Restore token from session storage if page reloads after redirect
 const storedToken = sessionStorage.getItem("spotify_access_token");
 if (storedToken) accessToken = storedToken;
 
-// Try exchanging code if redirected from Spotify login
+// Exchange code if redirected from Spotify login
 exchangeCode();
 </script>
 
