@@ -69,7 +69,7 @@ async function exchangeCode() {
 const data = await response.json();
 console.log(data);
 
-getPlaylistTracks(data.access_token, "PUT_PLAYLIST_ID_HERE");
+getPlaylistTracks(data.access_token, "37i9dQZF1DX0vHZ8elq0UK");
 }
 
 async function getPlaylistTracks(token, playlistId) {
@@ -85,7 +85,6 @@ async function getPlaylistTracks(token, playlistId) {
   const data = await response.json();
   console.log(data);
 
-  // Extract just track IDs
   const ids = data.items.map(item => item.track.id);
   console.log("Track IDs:", ids);
 }
