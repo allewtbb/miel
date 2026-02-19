@@ -70,6 +70,8 @@ const data = await response.json();
 console.log(data);
 
 getPlaylistTracks(data.access_token, "playlists/1JxAYa0Uukbdq2yj2ANKqT");
+getMyPlaylistIds(data.access_token);
+
 }
 
 async function getPlaylistTracks(token, playlistId) {
@@ -89,6 +91,23 @@ async function getPlaylistTracks(token, playlistId) {
   const ids = data.items.map(item => item.track.id);
   console.log("Track IDs:", ids);
 }
+
+
+async function getMyPlaylistIds(token) {
+  const response = await fetch(
+    "https://api.spotify.com/v1/me/playlists",
+    {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    }
+  );
+
+  const data = await response.json();
+  console.log(data);
+
+}
+
 
 
 exchangeCode();
