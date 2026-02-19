@@ -76,7 +76,7 @@ getMyPlaylistIds(data.access_token);
 
 async function getPlaylistTracks(token, playlistId) {
   const response = await fetch(
-    `https://api.spotify.com/v1/${playlistId}`,
+    `https://api.spotify.com/v1/${playlistId}/limit=10`,
     {
       headers: {
         Authorization: "Bearer " + token
