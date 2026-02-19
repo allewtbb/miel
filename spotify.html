@@ -69,12 +69,12 @@ async function exchangeCode() {
 const data = await response.json();
 console.log(data);
 
-getPlaylistTracks(data.access_token, "0TnOYISbd1XYRBk9myaseg");
+getPlaylistTracks(data.access_token, "playlists");
 }
 
 async function getPlaylistTracks(token, playlistId) {
   const response = await fetch(
-    `https://api.spotify.com/v1/artists/${playlistId}`,
+    `https://api.spotify.com/v1/me/${playlistId}`,
     {
       headers: {
         Authorization: "Bearer " + token
