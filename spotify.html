@@ -84,6 +84,7 @@ async function getPlaylistTracks(token, playlistId) {
 
   const data = await response.json();
   console.log(data);
+  console.log(data.items)
 
   const ids = data.items.map(item => item.track.id);
   console.log("Track IDs:", ids);
