@@ -69,14 +69,24 @@ async function exchangeCode() {
 const data = await response.json();
 console.log(data);
 
-getPlaylistTracks(data.access_token, "playlists/58Fz82pSTTvRYFrt5nEkg0/items?offset=100&limit=100");
+getPlaylistTracks(data.access_token, "58Fz82pSTTvRYFrt5nEkg0");
 getMyPlaylistIds(data.access_token);
 
 }
 
 async function getPlaylistTracks(token, playlistId) {
+  const total = await fetch(
+    `https://api.spotify.com/v1/playlists/${playlistId}/total`,
+    {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    }
+  );
+
+
   const response = await fetch(
-    `https://api.spotify.com/v1/${playlistId}`,
+    `https://api.spotify.com/v1/playlists/${playlistId}/items?offset=0&limit=20`,
     {
       headers: {
         Authorization: "Bearer " + token
@@ -85,6 +95,8 @@ async function getPlaylistTracks(token, playlistId) {
   );
 
   const data = await response.json();
+  const total = await total.json();
+  console.log(total);
   console.log(data);
   const itemitem = data.items;
   itemitem.forEach((e) => console.log(e.item.name));
