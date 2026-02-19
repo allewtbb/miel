@@ -1,11 +1,25 @@
 <!DOCTYPE html>
 <html>
 <body>
+
+<h2>Spotify Playlist Fetcher</h2>
+
 <button onclick="login()">Login with Spotify</button>
 
+<br><br>
+
+<input type="text" id="playlistInput" placeholder="Enter playlist ID">
+<button onclick="handleFetch()">Fetch Playlist</button>
+
+<pre id="output"></pre>
+
 <script>
-const clientId = "0843377a81674214a2987451b805f396";
+const clientId = "12345"; // your real client ID
 const redirectUri = window.location.origin + window.location.pathname;
+
+let accessToken = null;
+
+/* -------------------- AUTH SECTION -------------------- */
 
 function generateRandomString(length) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -66,11 +80,30 @@ async function exchangeCode() {
     })
   });
 
-const data = await response.json();
-console.log(data);
+  const data = await response.json();
 
-getPlaylistTracks(data.access_token, "58Fz82pSTTvRYFrt5nEkg0");
+  accessToken = data.access_token;
 
+  console.log("Logged in. Access token acquired.");
+  document.getElementById("output").textContent = "Logged in successfully.";
+}
+
+/* -------------------- PLAYLIST SECTION -------------------- */
+
+async function handleFetch() {
+  if (!accessToken) {
+    alert("You must login first.");
+    return;
+  }
+
+  const playlistId = document.getElementById("playlistInput").value.trim();
+
+  if (!playlistId) {
+    alert("Enter a playlist ID.");
+    return;
+  }
+
+  await getPlaylistTracks(accessToken, playlistId);
 }
 
 async function getPlaylistTracks(token, playlistId) {
@@ -84,15 +117,22 @@ async function getPlaylistTracks(token, playlistId) {
   );
 
   const data = await response.json();
-  console.log(data);
 
-  // Extract just track IDs
+  if (!data.items) {
+    document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+    return;
+  }
+
   const ids = data.items.map(item => item.track.id);
-  console.log("Track IDs:", ids);
+
+  document.getElementById("output").textContent =
+    "Track IDs:\n\n" + ids.join("\n");
 }
 
+/* -------------------- INIT -------------------- */
 
 exchangeCode();
 </script>
+
 </body>
 </html>
