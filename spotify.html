@@ -69,7 +69,7 @@ async function exchangeCode() {
 const data = await response.json();
 console.log(data);
 
-getPlaylistTracks(data.access_token, "playlists/58Fz82pSTTvRYFrt5nEkg0?limit=20");
+getPlaylistTracks(data.access_token, "playlists/58Fz82pSTTvRYFrt5nEkg0/items?offset=100&limit=100");
 getMyPlaylistIds(data.access_token);
 
 }
@@ -86,7 +86,7 @@ async function getPlaylistTracks(token, playlistId) {
 
   const data = await response.json();
   console.log(data);
-  const itemitem = data.items.items;
+  const itemitem = data.items;
   itemitem.forEach((e) => console.log(e.item.name));
 
 }
