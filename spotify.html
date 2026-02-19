@@ -69,7 +69,7 @@ async function exchangeCode() {
 const data = await response.json();
 console.log(data);
 
-getPlaylistTracks(data.access_token, "playlists/58Fz82pSTTvRYFrt5nEkg0limit=20");
+getPlaylistTracks(data.access_token, "playlists/58Fz82pSTTvRYFrt5nEkg0?limit=20");
 getMyPlaylistIds(data.access_token);
 
 }
