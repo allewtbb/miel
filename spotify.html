@@ -4,23 +4,22 @@
 
 <h2>Spotify Playlist Fetcher</h2>
 
-<button onclick="login()">Login with Spotify</button>
-
+<button id="loginBtn">Login with Spotify</button>
 <br><br>
 
 <input type="text" id="playlistInput" placeholder="Enter playlist ID">
-<button onclick="handleFetch()">Fetch Playlist</button>
+<button id="fetchBtn">Fetch Playlist</button>
 
 <pre id="output"></pre>
 
 <script>
-const clientId = "0843377a81674214a2987451b805f396"; // your real client ID
+/* -------------------- CONFIG -------------------- */
+const clientId = "0843377a81674214a2987451b805f396"; 
 const redirectUri = window.location.origin + window.location.pathname;
 
 let accessToken = null;
 
-/* -------------------- AUTH SECTION -------------------- */
-
+/* -------------------- UTILITY FUNCTIONS -------------------- */
 function generateRandomString(length) {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
@@ -43,6 +42,7 @@ function base64urlencode(buffer) {
     .replace(/=+$/, '');
 }
 
+/* -------------------- AUTHENTICATION -------------------- */
 async function login() {
   const verifier = generateRandomString(64);
   const hashed = await sha256(verifier);
@@ -67,6 +67,7 @@ async function exchangeCode() {
   if (!code) return;
 
   const verifier = localStorage.getItem("verifier");
+  if (!verifier) return;
 
   const response = await fetch("https://accounts.spotify.com/api/token", {
     method: "POST",
@@ -84,53 +85,59 @@ async function exchangeCode() {
 
   accessToken = data.access_token;
 
-  console.log("Logged in. Access token acquired.");
+  // Store token so page reload after redirect works
+  sessionStorage.setItem("spotify_access_token", accessToken);
+
   document.getElementById("output").textContent = "Logged in successfully.";
+
+  // Remove code from URL so it doesn't run exchange again on reload
+  window.history.replaceState({}, document.title, redirectUri);
 }
 
-/* -------------------- PLAYLIST SECTION -------------------- */
+/* -------------------- PLAYLIST FETCHING -------------------- */
+async function getPlaylistTracks(token, playlistId) {
+  const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}/tracks`, {
+    headers: {
+      Authorization: "Bearer " + token
+    }
+  });
 
-async function handleFetch() {
+  const data = await response.json();
+
+  if (data.error) {
+    document.getElementById("output").textContent = JSON.stringify(data, null, 2);
+    return;
+  }
+
+  const ids = data.items.map(item => item.track.id);
+  document.getElementById("output").textContent =
+    "Track IDs:\n\n" + ids.join("\n");
+}
+
+function handleFetch() {
   if (!accessToken) {
     alert("You must login first.");
     return;
   }
 
   const playlistId = document.getElementById("playlistInput").value.trim();
-
   if (!playlistId) {
     alert("Enter a playlist ID.");
     return;
   }
 
-  await getPlaylistTracks(accessToken, playlistId);
-}
-
-async function getPlaylistTracks(token, playlistId) {
-  const response = await fetch(
-    `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
-    {
-      headers: {
-        Authorization: "Bearer " + token
-      }
-    }
-  );
-
-  const data = await response.json();
-
-  if (!data.items) {
-    document.getElementById("output").textContent = JSON.stringify(data, null, 2);
-    return;
-  }
-
-  const ids = data.items.map(item => item.track.id);
-
-  document.getElementById("output").textContent =
-    "Track IDs:\n\n" + ids.join("\n");
+  getPlaylistTracks(accessToken, playlistId);
 }
 
 /* -------------------- INIT -------------------- */
+document.getElementById("loginBtn").addEventListener("click", login);
+document.getElementById("fetchBtn").addEventListener("click", handleFetch);
 
+// Restore token from session storage if page reloaded after redirect
+const storedToken = sessionStorage.getItem("spotify_access_token");
+if (storedToken) accessToken = storedToken;
+
+// Try exchanging code if redirected from Spotify login
 exchangeCode();
 </script>
 
