@@ -66,9 +66,30 @@ async function exchangeCode() {
     })
   });
 
+const data = await response.json();
+console.log(data);
+
+getPlaylistTracks(data.access_token, "PUT_PLAYLIST_ID_HERE");
+}
+
+async function getPlaylistTracks(token, playlistId) {
+  const response = await fetch(
+    `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+    {
+      headers: {
+        Authorization: "Bearer " + token
+      }
+    }
+  );
+
   const data = await response.json();
   console.log(data);
+
+  // Extract just track IDs
+  const ids = data.items.map(item => item.track.id);
+  console.log("Track IDs:", ids);
 }
+
 
 exchangeCode();
 </script>
