@@ -70,6 +70,8 @@ const data = await response.json();
 console.log(data);
 
 getPlaylistTotal(data.access_token, "58Fz82pSTTvRYFrt5nEkg0");
+getPlaylistTracks(data.access_token, "58Fz82pSTTvRYFrt5nEkg0");
+getMyPlaylistIds(data.access_token);
 
 
 }
@@ -107,10 +109,6 @@ async function getPlaylistTotal(token, playlistId) {
 
   const data = await response.json();
   console.log(data.total);
-
-getPlaylistTracks(data.access_token, "58Fz82pSTTvRYFrt5nEkg0");
-getMyPlaylistIds(data.access_token);
-
 
 }
 
